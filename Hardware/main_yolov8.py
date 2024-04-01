@@ -5,12 +5,9 @@ import cv2
 import math
 from multiprocessing import Process
 
-def lidar_buzzer():
-    call(["python", "lidar_buzzer.py"])
-
 def webcam():
-    #cap = cv2.VideoCapture(0)
-    cap = cv2.VideoCapture('http://192.168.214.227:81/stream')
+    cap = cv2.VideoCapture(0)
+    #cap = cv2.VideoCapture('http://192.168.214.227:81/stream')
     cap.set(3, 640)
     cap.set(4, 480)
 
@@ -78,13 +75,10 @@ def webcam():
 
 if __name__ == "__main__":
     # Create separate processes for lidar_buzzer and webcam functions
-    lidar_process = Process(target=lidar_buzzer)
     webcam_process = Process(target=webcam)
 
     # Start both processes
-    lidar_process.start()
     webcam_process.start()
 
     # Wait for both processes to finish
-    lidar_process.join()
     webcam_process.join()
