@@ -1,3 +1,7 @@
+// this code is working for both ARDUINO UNO and ARDUINO NANO 33 IOT
+//code from 
+//https://www.diyengineers.com/2022/06/02/lidar-how-to-use-with-arduino/
+
 #include <Wire.h>
 #include <TFLI2C.h>
 
