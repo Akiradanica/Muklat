@@ -1,3 +1,5 @@
+//all are working well and just need to connect to the internet
+//speaker not yet connected
 #include <Wire.h>
 #include <TFLI2C.h>
 
@@ -11,7 +13,7 @@ int16_t tfAddr = TFL_DEF_ADR; // Use this default I2C address
 
 //left 
 const int buzzer1Pin = 4;
-const int vibmotor1Pin = 12;
+const int vibmotor1Pin = 3;
 
 //right
 //int buzzer2Pin = 7;
