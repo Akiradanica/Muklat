@@ -1,3 +1,5 @@
+// this code is working for both ARDUINO UNO and ARDUINO NANO 33 IOT
+
 #include <Wire.h>
 #include <TFLI2C.h>
 
