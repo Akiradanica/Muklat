@@ -1,39 +1,16 @@
-from subprocess import call
-from subprocess import Popen
-from ultralytics import YOLO
 import cv2
 import math
-from multiprocessing import Process
+import threading
 import paho.mqtt.client as mqtt 
-
-def on_message(client, userdata, message):
-    print("Received message: ", str(message.payload.decode("utf-8")))
-
-    client = mqtt.Client("akira23")  # Choose a unique client ID
-    client.on_message = on_message
-
-    client.connect("192.168.0.106", 1883)  # Connect to MQTT broker
-    client.subscribe("LIDAR_DATA")  # Subscribe to a topic
-    client.loop_forever()  # Keep the client connected
-
-# Don't forget to replace "broker_address" and "topic" with your actual MQTT broker address and topic.
-
-def lidar_buzzer():
-    call(["python", "lidar_buzzer.py"])
+from ultralytics import YOLO
 
 def webcam():
     cap = cv2.VideoCapture(0)
-    #cap = cv2.VideoCapture('http://192.168.214.227:81/stream')
     cap.set(3, 640)
     cap.set(4, 480)
 
-    #model = YOLO("yolo-Weights/etonaaa.pt")
-
-    #classNames = ["chair", "door", "table", "person"]
-
     model = YOLO("yolo-Weights/yolov8n.pt")
 
-# object classes
     classNames = ["person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck", "boat",
               "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat",
               "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella",
@@ -45,6 +22,7 @@ def webcam():
               "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors",
               "teddy bear", "hair drier", "toothbrush"
               ]
+
     while True:
         success, img = cap.read()
         results = model(img, stream=True)
@@ -59,18 +37,8 @@ def webcam():
                 cv2.rectangle(img, (x1, y1), (x2, y2), (255, 0, 255), 3)
 
                 confidence = math.ceil((box.conf[0] * 100)) / 100
-                # print("Confidence --->", confidence)
-
                 cls = int(box.cls[0])
-                #print("Class name -->", classNames[cls])
-
-                org = [x1, y1]
-                font = cv2.FONT_HERSHEY_SIMPLEX
-                fontScale = 1
-                color = (255, 0, 0)
-                thickness = 2
-
-                cv2.putText(img, org, font, fontScale, color, thickness)
+                #cv2.putText(img, classNames[cls], (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
         cv2.imshow('Webcam', img)
         if cv2.waitKey(1) == ord('q'):
@@ -79,15 +47,25 @@ def webcam():
     cap.release()
     cv2.destroyAllWindows()
 
+def on_message(client, userdata, message):
+    print("Received message:", str(message.payload.decode("utf-8")))
+
 if __name__ == "__main__":
-    # Create separate processes for lidar_buzzer and webcam functions
-    #lidar_process = Process(target=lidar_buzzer)
-    webcam_process = Process(target=webcam)
+    # Start the webcam function in the main thread
+    webcam_thread = threading.Thread(target=webcam)
+    webcam_thread.start()
 
-    # Start both processes
-    #lidar_process.start()
-    webcam_process.start()
+    # Start the MQTT client in a separate thread
+    client = mqtt.Client("akira23")
+    client.connect("192.168.0.106", 1883)
+    client.subscribe("LIDAR_DATA")
+    client.on_message = on_message
 
-    # Wait for both processes to finish
-    #lidar_process.join()
-    webcam_process.join()
+    mqtt_thread = threading.Thread(target=client.loop_forever)
+    mqtt_thread.start()
+
+    # Wait for the webcam thread to finish
+    webcam_thread.join()
+
+    # Stop the MQTT client thread
+    client.loop_stop()
