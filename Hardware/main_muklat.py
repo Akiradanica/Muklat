@@ -55,11 +55,25 @@ if __name__ == "__main__":
     webcam_thread = threading.Thread(target=webcam)
     webcam_thread.start()
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+    # Start both processes
+    #lidar_process.start()
+    webcam_process.start()
+=======
+>>>>>>> Stashed changes
     # Start the MQTT client in a separate thread
     client = mqtt.Client("akira23")
     client.connect("192.168.0.106", 1883)
     client.subscribe("LIDAR_DATA")
+<<<<<<< Updated upstream
     client.on_message = on_message
+=======
+    #client.publish("LIDAR_DATA")
+    client.on_message = on_message
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 
     mqtt_thread = threading.Thread(target=client.loop_forever)
     mqtt_thread.start()
