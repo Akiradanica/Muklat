@@ -1,3 +1,34 @@
+/*
+  Used pins
+  -LIDAR
+    SDA/A4/D18
+    SCL/A5/D19
+
+  -SD CARD
+    CK - D13
+    MISO - D12
+    MOSI - D11
+    SCK - D10
+
+  -SPEAKER
+    + = D9
+    - = Transistor
+
+  -Vibrator
+    -D3 = right
+    -D2 = left
+
+  -Servo
+
+
+    
+
+
+
+*/
+
+
+
 #include <WiFiNINA.h>
 #include <PubSubClient.h>
 #include <Wire.h>
@@ -16,15 +47,20 @@ PubSubClient mqttClient(ardClient);
 
 //Topics in the MQTT
 const char topic[] = "LIDAR_DATA";
-const char topic2[] = "VIB_CTRL";
+const char topic2[] = "VIB_CTRL"; //pwedeng iremove na siguro toh
 const char topic3[] = "SERVO_CTRL";
 const char topic4[] = "AUD_OUT";
 
-//TFLuna
+//TFLuna Lidar
 TFLI2C tflI2C;
 int16_t tfDist;
 int16_t tfAddr = TFL_DEF_ADR;
 String lid_data;
+
+//Vibrator
+//change pin if necessary
+const int vibmotorL = 2; //Left
+const int vibmotorR = 3; //right
 
 void wifi_setup() //setting up wifi connection
 {
@@ -90,7 +126,7 @@ void Mqtt_reconnect() //reconnecting to the server
   }
 }
 
-void lidar_func()
+void lidar_func() //lidar setup
 {
   if (tflI2C.getData(tfDist, tfAddr)) 
   {
@@ -98,8 +134,50 @@ void lidar_func()
     Serial.println(lid_data);
     const char* payload = lid_data.c_str();
     mqttClient.publish(topic, payload);
+
+    if (tfDist < 50) 
+    {
+      vibrLEFT_func();
+      
+    } 
+    else
+    {
+      vibrRIGHT_func();
+      
+    }
+
+    
   }
   delay(50);
+  
+}
+
+void servo_func() //servo setup
+{
+  
+}
+
+void speaker_func()
+{
+  
+}
+ 
+void vibrLEFT_func() //need to still improve
+{
+  /*if ()
+  {
+    digitalWrite(vibmotorL, HIGH);
+  }
+  else 
+  {
+    digitalWrite(vibmotorL, LOW);
+  }*/
+}
+
+
+void vibrRIGHT_func() //need to still improve
+{
+  digitalWrite(vibmotorR, LOW);
 }
 
 void setup() 
@@ -109,6 +187,8 @@ void setup()
   Wire.begin();
   wifi_setup();
   broker_setup();
+  pinMode(vibmotorL, OUTPUT);
+  //pinMode(vibmotorR, OUTPUT);
 }
 
 void loop() 
@@ -116,8 +196,7 @@ void loop()
   //wifi_reconnect();  //stil not added
   Mqtt_reconnect();
   mqttClient.loop();
-  lidar_func();
-  
+  lidar_func(); 
 
 }
 
