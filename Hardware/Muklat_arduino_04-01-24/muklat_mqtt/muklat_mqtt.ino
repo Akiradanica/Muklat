@@ -4,6 +4,9 @@
     SDA/A4/D18
     SCL/A5/D19
 
+  -Servo
+    D6
+
   -SD CARD
     CK - D13
     MISO - D12
@@ -18,10 +21,6 @@
     -D3 = right
     -D2 = left
 
-  -Servo
-
-
-    
 
 
 
@@ -33,16 +32,17 @@
 #include <PubSubClient.h>
 #include <Wire.h>
 #include <TFLI2C.h>
+#include <Servo.h>
 #include "wifi_pass.h"
 
 //LAN 
-const char ssid [] = LAN_SSID;
-const char pass [] = LAN_PASS;
+const char ssid [] = "For Thesis ONLY";
+const char pass [] = "HAHA-05-haha";
 WiFiClient ardClient;
 
 // Server
-const char mqttServer [] = BROKER_IP;
-const int mqttPort = BROKER_PORT;
+const char mqttServer [] = "192.168.1.19";
+const int mqttPort = 1883;
 PubSubClient mqttClient(ardClient);
 
 //Topics in the MQTT
@@ -56,6 +56,10 @@ TFLI2C tflI2C;
 int16_t tfDist;
 int16_t tfAddr = TFL_DEF_ADR;
 String lid_data;
+
+//Servo
+ Servo servo1;
+ int servoPin = 6;
 
 //Vibrator
 //change pin if necessary
@@ -137,23 +141,61 @@ void lidar_func() //lidar setup
 
     if (tfDist < 50) 
     {
-      vibrLEFT_func();
-      
+      vibrLEFT_func(); 
     } 
     else
     {
       vibrRIGHT_func();
       
     }
-
-    
+ 
   }
   delay(50);
   
 }
 
-void servo_func() //servo setup
+/*void servo_func() //servo setup
 {
+  mqttClient.subscribe("SERVO_CTRL");
+  
+  
+  servo1.write(0);
+  delay(1000);
+  servo1.write(90);
+  delay(1000);
+  servo1.write(180);
+  delay(1000);
+  servo1.write(90);
+  delay(1000);
+
+}*/
+
+//"SERVO_CTRL";
+//"AUD_OUT";
+
+void callback(char* topic, byte* payload, unsigned int length) 
+{
+  Serial.println("Message arrived on topic: " + String(topic));
+
+  if (strcmp(topic, "SERVO_CTRL") == 0) 
+  {
+    // Convert message to integer (assuming message contains servo position)
+    int servoPos = atoi((char *)payload);
+
+    // Set servo position based on received message
+    
+    Serial.println("Servo position set to: " + String(servoPos));
+    servo1.write(servoPos);
+    //delay(10);
+    lidar_func();
+  }
+  else if (strcmp(topic, topic4) == 0)
+  {
+    // Handle audio output message
+    // Example: parse and process audio output control
+    Serial.println("Received audio output control");
+    // Add your audio output processing code here
+  }
   
 }
 
@@ -164,6 +206,7 @@ void speaker_func()
  
 void vibrLEFT_func() //need to still improve
 {
+  digitalWrite(vibmotorL, HIGH);
   /*if ()
   {
     digitalWrite(vibmotorL, HIGH);
@@ -177,16 +220,20 @@ void vibrLEFT_func() //need to still improve
 
 void vibrRIGHT_func() //need to still improve
 {
-  digitalWrite(vibmotorR, LOW);
+  digitalWrite(vibmotorL, LOW);
 }
 
 void setup() 
 {
   Serial.begin(115200);
-  while(!Serial);
+  //while(!Serial);
   Wire.begin();
   wifi_setup();
   broker_setup();
+  mqttClient.setCallback(callback);
+  mqttClient.subscribe("SERVO_CTRL");
+  mqttClient.subscribe("AUD_OUT");
+  servo1.attach(servoPin);
   pinMode(vibmotorL, OUTPUT);
   //pinMode(vibmotorR, OUTPUT);
 }
@@ -196,8 +243,7 @@ void loop()
   //wifi_reconnect();  //stil not added
   Mqtt_reconnect();
   mqttClient.loop();
-  lidar_func(); 
-
+  
 }
 
 
