@@ -8,25 +8,18 @@
     D6
 
   -SD CARD
-    CK - D13
+    Cs - D10
     MISO - D12
     MOSI - D11
-    SCK - D10
+    SCK - D13
 
-  -SPEAKER
+  -Amplifier/SPEAKER
     + = D9
-    - = Transistor
 
   -Vibrator
     -D3 = right
     -D2 = left
-
-
-
-
 */
-
-
 
 #include <WiFiNINA.h>
 #include <PubSubClient.h>
@@ -36,18 +29,17 @@
 #include "wifi_pass.h"
 
 //LAN 
-const char ssid [] = "For Thesis ONLY";
-const char pass [] = "HAHA-05-haha";
+const char ssid [] = LAN_SSID;
+const char pass [] = LAN_PASS;
 WiFiClient ardClient;
 
 // Server
-const char mqttServer [] = "192.168.1.19";
+const char mqttServer [] = BROKER_IP;
 const int mqttPort = 1883;
 PubSubClient mqttClient(ardClient);
 
 //Topics in the MQTT
 const char topic[] = "LIDAR_DATA";
-const char topic2[] = "VIB_CTRL"; //pwedeng iremove na siguro toh
 const char topic3[] = "SERVO_CTRL";
 const char topic4[] = "AUD_OUT";
 
@@ -78,10 +70,19 @@ void wifi_setup() //setting up wifi connection
     delay(5000);
   }
 
-  //disp connection to network and broker/server
+  //disp connection to network
   Serial.println("");
   Serial.println("You're connected to the Network");
   Serial.println("");
+}
+
+void wifi_reconnect()
+{
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.print("Wifi connection lost. Attemting to reconnect...");
+    wifi_setup();
+  }
 }
 
 void broker_setup() //setting up the server connection
@@ -101,11 +102,15 @@ void broker_setup() //setting up the server connection
     while (1);
   }
 
-  Serial.println("You're connected to the MQTT broker!");
+  Serial.println("You're connected to the MQTT broker!"); //disp connection to the server
   Serial.println();
+  Serial.println();
+  mqttClient.subscribe(topic3);
+  mqttClient.subscribe(topic4);
+  
 }  
 
-void Mqtt_reconnect() //reconnecting to the server
+void mqtt_reconnect() //reconnecting to the server
 {
   if (!mqttClient.connected()) 
   {
@@ -113,9 +118,7 @@ void Mqtt_reconnect() //reconnecting to the server
     if (mqttClient.connect("arduinoClient")) 
     {
       Serial.println("Reconnected to MQTT broker");
-      mqttClient.subscribe(topic); // Re-subscribe to topics after reconnection
-      mqttClient.subscribe(topic2);
-      mqttClient.subscribe(topic3);
+      mqttClient.subscribe(topic3); // Re-subscribe to topics after reconnection
       mqttClient.subscribe(topic4);
       //mqttClient.publish(topic,message);
     } 
@@ -138,89 +141,73 @@ void lidar_func() //lidar setup
     Serial.println(lid_data);
     const char* payload = lid_data.c_str();
     mqttClient.publish(topic, payload);
-
-    if (tfDist < 50) 
-    {
-      vibrLEFT_func(); 
-    } 
-    else
-    {
-      vibrRIGHT_func();
-      
-    }
- 
   }
-  delay(50);
-  
 }
-
-/*void servo_func() //servo setup
-{
-  mqttClient.subscribe("SERVO_CTRL");
-  
-  
-  servo1.write(0);
-  delay(1000);
-  servo1.write(90);
-  delay(1000);
-  servo1.write(180);
-  delay(1000);
-  servo1.write(90);
-  delay(1000);
-
-}*/
 
 //"SERVO_CTRL";
 //"AUD_OUT";
 
 void callback(char* topic, byte* payload, unsigned int length) 
 {
+  //callback messages
   Serial.println("Message arrived on topic: " + String(topic));
-
-  if (strcmp(topic, "SERVO_CTRL") == 0) 
+  if (strcmp(topic, topic3) == 0) 
   {
     // Convert message to integer (assuming message contains servo position)
     int servoPos = atoi((char *)payload);
 
     // Set servo position based on received message
-    
-    Serial.println("Servo position set to: " + String(servoPos));
+    Serial.println("Servo position set to: " + String(servoPos)); //could be commented
     servo1.write(servoPos);
-    //delay(10);
-    lidar_func();
+
+    if (servoPos == 90)
+    {
+      delay(50);
+      lidar_func();
+      if (tfDist < 75) //continous vibration of both left and right vibrator motor
+      {
+        digitalWrite(vibmotorL, HIGH); 
+        delay(10);
+        digitalWrite(vibmotorR, HIGH);
+        delay(10);
+      } 
+    }
+
+    else if (servoPos == 45 || 55 || 65 || 75 || 85)
+    {
+      delay(50);
+      lidar_func();
+      if (tfDist < 75) //continous vibration of both left and right vibrator motor
+      {
+        digitalWrite(vibmotorL, HIGH); 
+        digitalWrite(vibmotorR, LOW);
+        delay(10);
+      }
+    }
+
+    else if (servoPos == 95 || 105 || 115 || 125 || 135)
+    {
+      delay(50);
+      lidar_func();
+      if (tfDist < 75) //continous vibration of both left and right vibrator motor
+      {
+        digitalWrite(vibmotorL, LOW); 
+        digitalWrite(vibmotorR, HIGH);
+        delay(10);
+      }
+    }
+    delay(50);
   }
+
   else if (strcmp(topic, topic4) == 0)
   {
     // Handle audio output message
     // Example: parse and process audio output control
-    Serial.println("Received audio output control");
-    // Add your audio output processing code here
+    Serial.println("Received audio output control"); //could be commented
+    //int audioOUT = ;
+    //speaker_func();
   }
   
-}
-
-void speaker_func()
-{
-  
-}
- 
-void vibrLEFT_func() //need to still improve
-{
-  digitalWrite(vibmotorL, HIGH);
-  /*if ()
-  {
-    digitalWrite(vibmotorL, HIGH);
-  }
-  else 
-  {
-    digitalWrite(vibmotorL, LOW);
-  }*/
-}
-
-
-void vibrRIGHT_func() //need to still improve
-{
-  digitalWrite(vibmotorL, LOW);
 }
 
 void setup() 
@@ -231,19 +218,18 @@ void setup()
   wifi_setup();
   broker_setup();
   mqttClient.setCallback(callback);
-  mqttClient.subscribe("SERVO_CTRL");
-  mqttClient.subscribe("AUD_OUT");
+  mqttClient.subscribe(topic3);
+  mqttClient.subscribe(topic4);
   servo1.attach(servoPin);
   pinMode(vibmotorL, OUTPUT);
-  //pinMode(vibmotorR, OUTPUT);
+  pinMode(vibmotorR, OUTPUT);
 }
 
 void loop() 
 {
-  //wifi_reconnect();  //stil not added
-  Mqtt_reconnect();
+  wifi_reconnect();  
+  mqtt_reconnect();
   mqttClient.loop();
-  
 }
 
 
