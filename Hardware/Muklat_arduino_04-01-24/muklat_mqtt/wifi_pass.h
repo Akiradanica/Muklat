@@ -1,7 +1,7 @@
-#define LAN_SSID "For Thesis ONLY"
-#define LAN_PASS "HAHA-05-haha"
+#define LAN_SSID "TP-Link_4th_Floor"
+#define LAN_PASS "13924270"
 
-#define BROKER_IP "192.168.1.19"
+#define BROKER_IP "192.168.0.104"
 #define BROKER_PORT 1883
 
 //wifi or mobile hotspot should be set to 2.4G
@@ -23,7 +23,7 @@
     // 1883
 
 //mel's router
-  //TP-Link_08F5
+  //TP-Link_4th_Floor
   //13924270
 
 //LAN
