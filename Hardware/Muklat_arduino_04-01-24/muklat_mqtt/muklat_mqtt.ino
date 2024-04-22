@@ -14,11 +14,11 @@
     SCK - D13
 
   -Amplifier/SPEAKER
-    + = D8
+    + = D0 /d14
 
   -Vibrator
-    -D3 = right
-    -D2 = left
+    -D4 = right
+    -D3 = left
 */
 
 #include <WiFiNINA.h>
@@ -57,11 +57,13 @@ char lid_data;
 
 //Vibrator
 //change pin if necessary
-int vibmotorL = 2; //Left
-int vibmotorR = 3; //right
+int vibmotorL = 3; //Left
+int vibmotorR = 4; //right
 
 //Speaker
-int chipSelect = 8;
+int chipSelect = 10;
+
+int detectioncount = 0;
 
 void wifi_setup() //setting up wifi connection
 {
@@ -125,8 +127,8 @@ void lidar_func() //lidar setup
   {
     String lid_data = String(tfDist) + " cm / " + String(tfDist / 100) + " m";
     Serial.println(lid_data);
-    //const char* payload = lid_data.c_str();
-    //mqttClient.publish(topic, payload);
+    const char* payload = lid_data.c_str();
+    mqttClient.publish(topic, payload);
   }
 }
 
@@ -154,7 +156,6 @@ void callback(char* topic, byte* payload, unsigned int length)
   }
 }
 
-int detectioncount = 0;
 void handleDetection(String detection)
 {
   Serial.println("Detection received: " + detection);
@@ -217,7 +218,7 @@ void setServoPosition(int servoPos)
   Serial.println("Setting servo position: " + String(servoPos));
   servo1.write(servoPos);
 
-  if (servoPos == 90) //position 90 deg
+  if (servoPos >= 75 && servoPos < 105) //position 90 deg
   {
     delay(50);
     lidar_func();
@@ -257,7 +258,7 @@ void setServoPosition(int servoPos)
     }
   }
 
-  else if (servoPos >= 45 && servoPos <= 85) //left
+  else if (servoPos >= 105 && servoPos < 135) //left
   {
     delay(50);
     lidar_func();
@@ -296,7 +297,7 @@ void setServoPosition(int servoPos)
 
   }
 
-  else if (servoPos >= 95 && servoPos <= 135) //right
+  else if (servoPos >= 45 && servoPos < 75) //right
   {
     delay(50);
     lidar_func();
@@ -379,8 +380,6 @@ void setup()
   wifi_setup();
   broker_setup();
   mqttClient.setCallback(callback);
-  mqttClient.subscribe(topic1);
-  mqttClient.subscribe(topic2);
   sd_func();
   Wire.begin();
   servo1.attach(servoPin);

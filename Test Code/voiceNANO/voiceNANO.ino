@@ -2,26 +2,26 @@
 #include <SPI.h>
 #include <AudioZero.h>
 
-const int chipSelect = 8;
+const int chipSelect = 10;
 
-const char aud13[] = "care.wav";
+const char aud13[] = "f1.wav";
 const char aud14[] = "chair.wav";
-const char aud15[] = "close.wav";
+const char aud15[] = "f2.wav";
 const char aud16[] = "door.wav";
-const char aud17[] = "far.wav";
-const char aud18[] = "found.wav";
-const char aud19[] = "front.wav";
-const char aud20[] = "left.wav";
-const char aud21[] = "meters.wav";
-const char aud22[] = "near.wav";
-const char aud23[] = "obs.wav";
+const char aud17[] = "f3.wav";
+const char aud18[] = "f4.wav";
+const char aud19[] = "l1.wav";
+const char aud20[] = "l2.wav";
+const char aud21[] = "l3s.wav";
+const char aud22[] = "l4.wav";
+const char aud23[] = "r1.wav";
 const char aud24[] = "person.wav";
-const char aud25[] = "right.wav";
+const char aud25[] = "r2.wav";
 const char aud26[] = "stairs.wav";
 const char aud27[] = "table.wav";
 const char aud28[] = "poste.wav";
-const char aud30[] = "obstraction.wav";
-const char aud31[] = "ahead.wav";
+const char aud30[] = "r3.wav";
+const char aud31[] = "r4.wav";
 const char aud32[] = "warning.wav";
 
 void setup() 
