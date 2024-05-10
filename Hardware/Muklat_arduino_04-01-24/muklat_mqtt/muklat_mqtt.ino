@@ -154,6 +154,8 @@ void callback(char* topic, byte* payload, unsigned int length)
     int servoPos = atoi((char *)payload);
     setServoPosition(servoPos);
   }
+
+  
 }
 
 void handleDetection(String detection)
